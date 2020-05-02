@@ -21,15 +21,15 @@ function getHtml(template) {
 }
 
 // Show the photos that exist in an album.
-function viewAlbum(albumName, startAfter = albumName + "/jpg/", prevTag = "") {
-  var albumPhotosKey = albumName + "/";
+function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
+  const albumPhotosKey = albumName + "/";
   s3.listObjectsV2({ Prefix: albumPhotosKey + "jpg/", StartAfter: startAfter, MaxKeys: 30 }, function (err, data) {
     if (err) {
       return alert("There was an error viewing your album: " + err.message);
     }
     // 'this' references the AWS.Response instance that represents the response
     var href = this.request.httpRequest.endpoint.href;
-    var photoKey = "";
+    let photoKey = "";
     var i = 0;
     var photos = data.Contents.map(function (photo) {
       photoKey = photo.Key;
@@ -41,57 +41,50 @@ function viewAlbum(albumName, startAfter = albumName + "/jpg/", prevTag = "") {
         },
       });
       i++;
-      var photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
-      return getHtml(['<p><img src="' + photoUrl + '" class="img" />' + photoKey + "</p>"]);
+      const photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
+      return getHtml([`<figure><img src="${photoUrl}" class="img" />${photoKey}</figure>`]);
     });
 
-    var message = photos.length
-      ? "<p>The following photos are present.</p>"
-      : "<p>There are no photos in this album.</p>";
+    const message = photos.length
+      ? `<p>The following photos are present.</p>`
+      : `<p>There are no photos in this album.</p>`;
     var htmlTemplate = [
-      "<div>",
-      '<button class="backtoalbums">',
-      "Back To Albums",
-      "</button>",
-      "</div>",
-      "<h2>",
-      "Album: " + albumName,
-      "</h2>",
-      message,
-      "<div>",
-      getHtml(photos),
-      "</div>",
-      "<h2>",
-      "End of Album: " + albumName,
-      "</h2>",
-      "<div>",
-      '<button class="backtoalbums">',
-      "Back To Albums",
-      "</button>",
-      '<button class="pagebutton" data-albumname="' + albumName + '" data-pagetag="' + prevTag + '">prev set</button>',
-      '<button class="pagebutton" data-albumname="' +
-        albumName +
-        '" data-pagetag="' +
-        photoKey +
-        '"  data-prevtag="' +
-        data.Contents[0].Key +
-        '">next set</button>',
-      "</div>",
+      `
+        <div>
+            <button class="backtoalbums">Back To Album</button>
+        </div>
+        <h2>
+            Album: ${albumName}
+        </h2>
+              ${message}
+        <div>
+              ${getHtml(photos)}
+        </div>
+        <h2>
+        End of Album: ${albumName}
+        </h2>
+        <div><button class="backtoalbums">Back To Albums
+        </button>
+              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>',
+              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${
+        data.Contents[0].Key
+      }">next set</button>
+        </div>`,
     ];
     document.getElementById("photos").innerHTML = getHtml(htmlTemplate);
     document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
 
     // TODO: remove this terrible workaround for a click event to "view" the album
     const buttons = document.getElementsByClassName("backtoalbums");
-    Array.from(buttons).forEach(function (element) {
-      element.addEventListener("click", function () {
+    [...buttons].forEach((element) => {
+      element.addEventListener("click", () => {
         listAlbums();
       });
     });
 
     const pagebuttons = document.getElementsByClassName("pagebutton");
-    Array.from(pagebuttons).forEach(function (element) {
-      element.addEventListener("click", function () {
+    [...pagebuttons].forEach(function (element) {
+      element.addEventListener("click", () => {
         viewAlbum(event.target.dataset.albumname, event.target.dataset.pagetag, event.target.dataset.prevtag);
       });
     });
@@ -108,23 +101,23 @@ function listAlbums() {
         var prefix = commonPrefix.Prefix;
         var albumName = decodeURIComponent(prefix.replace("/", ""));
         return getHtml([
-          "<li>",
-          '<button class="album" style="margin:5px;" data-albumname="' + albumName + '">',
-          albumName,
-          "</button>",
-          "</li>",
+          `<li>
+            <button class="album" style="margin:5px;" data-albumname="${albumName}">
+                ${albumName}
+            </button>
+          </li>`,
         ]);
       });
       var message = albums.length
-        ? getHtml(["<p>Click on an album name to view it.</p>"])
-        : "<p>You do not have any albums. Please Create album.";
-      var htmlTemplate = ["<h2>Albums</h2>", message, "<ul>", getHtml(albums), "</ul>"];
+        ? getHtml([`<p>Click on an album name to view it.</p>`])
+        : `<p>You do not have any albums. Please Create album.`;
+      var htmlTemplate = [`<h2>Albums</h2>${message}<ul>${getHtml(albums)}</ul>`];
       document.getElementById("photos").innerHTML = getHtml(htmlTemplate);
     }
 
     // TODO: remove this terrible workaround for a click event to "view" the album
     const buttons = document.getElementsByClassName("album");
-    Array.from(buttons).forEach(function (element) {
+    [...buttons].forEach(function (element) {
       element.addEventListener("click", function () {
         viewAlbum(event.target.dataset.albumname);
       });
