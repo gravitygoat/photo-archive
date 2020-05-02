@@ -15,11 +15,6 @@ const s3 = new AWS.S3({
   params: { Bucket: albumBucketName },
 });
 
-// A utility function to create HTML.
-function getHtml(template) {
-  return template.join("\n");
-}
-
 // Show the photos that exist in an album.
 function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
   const albumPhotosKey = albumName + "/";
@@ -42,14 +37,13 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
       });
       i++;
       const photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
-      return getHtml([`<figure><img src="${photoUrl}" class="img" />${photoKey}</figure>`]);
+      return `<figure><img src="${photoUrl}" class="img" />${photoKey}</figure>`;
     });
 
     const message = photos.length
       ? `<p>The following photos are present.</p>`
       : `<p>There are no photos in this album.</p>`;
-    var htmlTemplate = [
-      `
+    var htmlTemplate = `
         <div>
             <button class="backtoalbums">Back To Album</button>
         </div>
@@ -58,7 +52,7 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
         </h2>
               ${message}
         <div>
-              ${getHtml(photos)}
+              ${photos}
         </div>
         <h2>
         End of Album: ${albumName}
@@ -66,23 +60,20 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
         <div><button class="backtoalbums">Back To Albums
         </button>
               '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>',
-              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${
-        data.Contents[0].Key
-      }">next set</button>
-        </div>`,
-    ];
-    document.getElementById("photos").innerHTML = getHtml(htmlTemplate);
+              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
+        </div>`;
+    document.querySelector("#photos").innerHTML = htmlTemplate;
     document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
 
     // TODO: remove this terrible workaround for a click event to "view" the album
-    const buttons = document.getElementsByClassName("backtoalbums");
+    const buttons = document.querySelectorAll(".backtoalbums");
     [...buttons].forEach((element) => {
       element.addEventListener("click", () => {
         listAlbums();
       });
     });
 
-    const pagebuttons = document.getElementsByClassName("pagebutton");
+    const pagebuttons = document.querySelectorAll(".pagebutton");
     [...pagebuttons].forEach(function (element) {
       element.addEventListener("click", () => {
         viewAlbum(event.target.dataset.albumname, event.target.dataset.pagetag, event.target.dataset.prevtag);
@@ -97,26 +88,24 @@ function listAlbums() {
     if (err) {
       return alert("There was an error listing your albums: " + err.message);
     } else {
-      var albums = data.CommonPrefixes.map(function (commonPrefix) {
-        var prefix = commonPrefix.Prefix;
-        var albumName = decodeURIComponent(prefix.replace("/", ""));
-        return getHtml([
-          `<li>
+      const albums = data.CommonPrefixes.reduce((acc, commonPrefix) => {
+        const prefix = commonPrefix.Prefix;
+        const albumName = decodeURIComponent(prefix.replace("/", ""));
+        return (acc += `<li>
             <button class="album" style="margin:5px;" data-albumname="${albumName}">
                 ${albumName}
             </button>
-          </li>`,
-        ]);
-      });
+          </li>`);
+      }, "");
       var message = albums.length
-        ? getHtml([`<p>Click on an album name to view it.</p>`])
+        ? `<p>Click on an album name to view it.</p>`
         : `<p>You do not have any albums. Please Create album.`;
-      var htmlTemplate = [`<h2>Albums</h2>${message}<ul>${getHtml(albums)}</ul>`];
-      document.getElementById("photos").innerHTML = getHtml(htmlTemplate);
+      var htmlTemplate = [`<h2>Albums</h2>${message}<ul>${albums}</ul>`];
+      document.querySelector("#photos").innerHTML = htmlTemplate;
     }
 
     // TODO: remove this terrible workaround for a click event to "view" the album
-    const buttons = document.getElementsByClassName("album");
+    const buttons = document.querySelectorAll(".album");
     [...buttons].forEach(function (element) {
       element.addEventListener("click", function () {
         viewAlbum(event.target.dataset.albumname);
@@ -134,7 +123,7 @@ listAlbums();
 //     Array.prototype.forEach.call(images, function(image) {
 //         EXIF.getData(image, function() {
 //             var allMetaData = EXIF.getAllTags(this);
-//             var allMetaDataSpan = document.getElementById("allMetaDataSpan");
+//             var allMetaDataSpan = document.querySelector("#allMetaDataSpan");
 //             allMetaDataSpan.innerHTML = JSON.stringify(allMetaData, null, "\t");
 //         });
 //     });
