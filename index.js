@@ -1,7 +1,12 @@
+import "./css/styles.css";
+
 const albumBucketName = process.env.BUCKET_NAME;
 const cloudfrontBaseUrl = process.env.CLOUD_FRONT_BUCKET_URL;
 const identityPoolId = process.env.IDENTITY_POOL_ID;
 const awsRegion = process.env.AWS_REGION;
+
+// DOM Elements
+const photosContainerEl = document.querySelector("#photos");
 
 // Initialize the Amazon Cognito credentials provider
 AWS.config.region = awsRegion; // Region
@@ -13,6 +18,19 @@ AWS.config.credentials = new AWS.CognitoIdentityCredentials({
 const s3 = new AWS.S3({
   apiVersion: "2006-03-01",
   params: { Bucket: albumBucketName },
+});
+
+// Delegated events
+photosContainerEl.addEventListener("click", (event) => {
+  if (event.target.className === "backtoalbums") {
+    listAlbums();
+  }
+  if (event.target.className === "pagebutton") {
+    viewAlbum(event.target.dataset.albumname, event.target.dataset.pagetag, event.target.dataset.prevtag);
+  }
+  if (event.target.className === "album") {
+    viewAlbum(event.target.dataset.albumname);
+  }
 });
 
 // Show the photos that exist in an album.
@@ -62,23 +80,8 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
           <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>
           <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
         </div>`;
-    document.querySelector("#photos").innerHTML = htmlTemplate;
+    photosContainerEl.innerHTML = htmlTemplate;
     // document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
-
-    // TODO: remove this terrible workaround for a click event to "view" the album
-    const buttons = document.querySelectorAll(".backtoalbums");
-    [...buttons].forEach((element) => {
-      element.addEventListener("click", () => {
-        listAlbums();
-      });
-    });
-
-    const pagebuttons = document.querySelectorAll(".pagebutton");
-    [...pagebuttons].forEach((element) => {
-      element.addEventListener("click", () => {
-        viewAlbum(event.target.dataset.albumname, event.target.dataset.pagetag, event.target.dataset.prevtag);
-      });
-    });
   });
 }
 
@@ -88,7 +91,7 @@ function listAlbums() {
     if (err) {
       return alert("There was an error listing your albums: " + err.message);
     } else {
-      const albums = data.CommonPrefixes.reduce((acc, commonPrefix) => {
+      const albumsItems = data.CommonPrefixes.reduce((acc, commonPrefix) => {
         const prefix = commonPrefix.Prefix;
         const albumName = decodeURIComponent(prefix.replace("/", ""));
         return (acc += `<li>
@@ -97,20 +100,14 @@ function listAlbums() {
             </button>
           </li>`);
       }, "");
-      var message = albums.length
+
+      const message = albumsItems.length
         ? `<p>Click on an album name to view it.</p>`
         : `<p>You do not have any albums. Please Create album.`;
-      var htmlTemplate = [`<h2>Albums</h2>${message}<ul>${albums}</ul>`];
-      document.querySelector("#photos").innerHTML = htmlTemplate;
-    }
 
-    // TODO: remove this terrible workaround for a click event to "view" the album
-    const buttons = document.querySelectorAll(".album");
-    [...buttons].forEach((element) => {
-      element.addEventListener("click", () => {
-        viewAlbum(event.target.dataset.albumname);
-      });
-    });
+      const htmlTemplate = `<h2>Albums</h2>${message}<ul>${albumsItems}</ul>`;
+      photosContainerEl.innerHTML = htmlTemplate;
+    }
   });
 }
 
