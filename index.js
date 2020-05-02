@@ -41,11 +41,10 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
       return alert("There was an error viewing your album: " + err.message);
     }
     // 'this' references the AWS.Response instance that represents the response
-    let href = this.request.httpRequest.endpoint.href;
-    let photoKey = "";
-    let i = 0;
-    var photos = data.Contents.reduce((acc, photo) => {
+    let photoKey = ""; // TODO: refactor this stuff
+    const photos = data.Contents.reduce((acc, photo) => {
       photoKey = photo.Key;
+
       const imageRequest = JSON.stringify({
         bucket: albumBucketName,
         key: photoKey,
@@ -53,7 +52,6 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
           resize: { width: 380 },
         },
       });
-      i++;
       const photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
       return (acc += `<figure><img src="${photoUrl}" class="img" /><figcaption>${photoKey}</figcaption></figure>`);
     }, "");
@@ -61,7 +59,8 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
     const message = photos.length
       ? `<p>The following photos are present.</p>`
       : `<p>There are no photos in this album.</p>`;
-    var htmlTemplate = `
+
+    const htmlTemplate = `
         <div>
             <button class="backtoalbums">Back To Albums</button>
         </div>
