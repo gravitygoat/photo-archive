@@ -18,15 +18,15 @@ const s3 = new AWS.S3({
 // Show the photos that exist in an album.
 function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
   const albumPhotosKey = albumName + "/";
-  s3.listObjectsV2({ Prefix: albumPhotosKey + "jpg/", StartAfter: startAfter, MaxKeys: 30 }, function (err, data) {
+  s3.listObjectsV2({ Prefix: `${albumPhotosKey}jpg/`, StartAfter: startAfter, MaxKeys: 30 }, function (err, data) {
     if (err) {
       return alert("There was an error viewing your album: " + err.message);
     }
     // 'this' references the AWS.Response instance that represents the response
-    var href = this.request.httpRequest.endpoint.href;
+    let href = this.request.httpRequest.endpoint.href;
     let photoKey = "";
-    var i = 0;
-    var photos = data.Contents.map(function (photo) {
+    let i = 0;
+    var photos = data.Contents.reduce((acc, photo) => {
       photoKey = photo.Key;
       const imageRequest = JSON.stringify({
         bucket: albumBucketName,
@@ -37,8 +37,8 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
       });
       i++;
       const photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
-      return `<figure><img src="${photoUrl}" class="img" />${photoKey}</figure>`;
-    });
+      return (acc += `<figure><img src="${photoUrl}" class="img" /><figcaption>${photoKey}</figcaption></figure>`);
+    }, "");
 
     const message = photos.length
       ? `<p>The following photos are present.</p>`
@@ -50,20 +50,21 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
         <h2>
             Album: ${albumName}
         </h2>
-              ${message}
-        <div>
-              ${photos}
+            ${message}
+        <div class="photo-grid">
+            ${photos}
         </div>
         <h2>
-        End of Album: ${albumName}
+            End of Album: ${albumName}
         </h2>
-        <div><button class="backtoalbums">Back To Albums
+        <div>
+        <button class="backtoalbums">Back To Albums
         </button>
-              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>',
-              '<button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
+              <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>
+              <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
         </div>`;
     document.querySelector("#photos").innerHTML = htmlTemplate;
-    document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
+    // document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
 
     // TODO: remove this terrible workaround for a click event to "view" the album
     const buttons = document.querySelectorAll(".backtoalbums");
@@ -74,7 +75,7 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
     });
 
     const pagebuttons = document.querySelectorAll(".pagebutton");
-    [...pagebuttons].forEach(function (element) {
+    [...pagebuttons].forEach((element) => {
       element.addEventListener("click", () => {
         viewAlbum(event.target.dataset.albumname, event.target.dataset.pagetag, event.target.dataset.prevtag);
       });
@@ -106,8 +107,8 @@ function listAlbums() {
 
     // TODO: remove this terrible workaround for a click event to "view" the album
     const buttons = document.querySelectorAll(".album");
-    [...buttons].forEach(function (element) {
-      element.addEventListener("click", function () {
+    [...buttons].forEach((element) => {
+      element.addEventListener("click", () => {
         viewAlbum(event.target.dataset.albumname);
       });
     });
