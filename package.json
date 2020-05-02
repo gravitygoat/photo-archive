@@ -4,11 +4,16 @@
   "description": "basic s3 photoviewer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "parcel index.html",
+    "build": "parcel build index.html"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "exifreader": "^3.9.0"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4",
+    "postcss-nested": "^4.2.1"
   }
 }
