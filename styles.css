@@ -3,34 +3,23 @@ body {
   padding: 0;
 }
 
-#photos img {
-  width: 100%;
-  height: auto;
+.img {
   display: block;
+  height: auto;
+  width: 100%;
 }
 
 .photo-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-}
+  grid-template-columns: 1fr;
 
-@media (max-width: 1200px) {
-  .photo-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-@media (max-width: 1000px) {
-  .photo-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@media (max-width: 800px) {
-  .photo-grid {
+  @media (min-width: 400px) {
     grid-template-columns: 1fr 1fr;
   }
-}
-@media (max-width: 400px) {
-  .photo-grid {
-    grid-template-columns: 1fr;
+  @media (min-width: 800px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (min-width: 1000px) {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

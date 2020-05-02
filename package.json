@@ -13,6 +13,7 @@
     "exifreader": "^3.9.0"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.4"
+    "parcel-bundler": "^1.12.4",
+    "postcss-nested": "^4.2.1"
   }
 }

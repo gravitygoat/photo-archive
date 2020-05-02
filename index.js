@@ -45,7 +45,7 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
       : `<p>There are no photos in this album.</p>`;
     var htmlTemplate = `
         <div>
-            <button class="backtoalbums">Back To Album</button>
+            <button class="backtoalbums">Back To Albums</button>
         </div>
         <h2>
             Album: ${albumName}
@@ -58,10 +58,9 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
             End of Album: ${albumName}
         </h2>
         <div>
-        <button class="backtoalbums">Back To Albums
-        </button>
-              <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>
-              <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
+          <button class="backtoalbums">Back To Albums</button>
+          <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${prevTag}">prev set</button>
+          <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
         </div>`;
     document.querySelector("#photos").innerHTML = htmlTemplate;
     // document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
