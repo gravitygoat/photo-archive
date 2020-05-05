@@ -45,15 +45,8 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
     const photos = data.Contents.reduce((acc, photo) => {
       photoKey = photo.Key;
 
-      const imageRequest = JSON.stringify({
-        bucket: albumBucketName,
-        key: photoKey,
-        edits: {
-          resize: { width: 380 },
-        },
-      });
-      const photoUrl = cloudfrontBaseUrl + btoa(imageRequest);
-      return (acc += `<figure><img src="${photoUrl}" class="img" /><figcaption>${photoKey}</figcaption></figure>`);
+      const image = new Image(photoKey, photoKey, albumBucketName);
+      return (acc += `<figure><img src="${image.thumbnail}" class="img" /><figcaption>${image.title}</figcaption></figure>`);
     }, "");
 
     const message = photos.length
@@ -80,7 +73,6 @@ function viewAlbum(albumName, startAfter = `${albumName}/jpg/`, prevTag = "") {
           <button class="pagebutton" data-albumname="${albumName}" data-pagetag="${photoKey}" data-prevtag="${data.Contents[0].Key}">next set</button>
         </div>`;
     photosContainerEl.innerHTML = htmlTemplate;
-    // document.getElementsByTagName("img")[0].setAttribute("style", "display:none;");
   });
 }
 
@@ -91,11 +83,10 @@ function listAlbums() {
       return alert("There was an error listing your albums: " + err.message);
     } else {
       const albumsItems = data.CommonPrefixes.reduce((acc, commonPrefix) => {
-        const prefix = commonPrefix.Prefix;
-        const albumName = decodeURIComponent(prefix.replace("/", ""));
+        const album = new Album(commonPrefix.Prefix, commonPrefix.Prefix);
         return (acc += `<li>
-            <button class="album" style="margin:5px;" data-albumname="${albumName}">
-                ${albumName}
+            <button class="album" style="margin:5px;" data-albumname="${album.albumName}">
+                ${album.albumName}
             </button>
           </li>`);
       }, "");
@@ -110,18 +101,37 @@ function listAlbums() {
   });
 }
 
-listAlbums();
+class Album {
+  constructor(title, albumName) {
+    this.title = title;
+    this.albumName = this.getAlbumName(albumName);
+  }
 
-// TODO: this works, but it needs to be called after the image has been rendered on the page. this will be tuff in the current implementation
-// function getExif() {
-//     console.log('getExif')
-//     var images = document.getElementsByTagName("img");
-//     Array.prototype.forEach.call(images, function(image) {
-//         EXIF.getData(image, function() {
-//             var allMetaData = EXIF.getAllTags(this);
-//             var allMetaDataSpan = document.querySelector("#allMetaDataSpan");
-//             allMetaDataSpan.innerHTML = JSON.stringify(allMetaData, null, "\t");
-//         });
-//     });
-//
-// }
+  getAlbumName(albumName) {
+    return decodeURIComponent(albumName.replace("/", ""));
+  }
+}
+
+class Image {
+  constructor(title, key, albumname) {
+    this.title = title;
+    this.key = key;
+    this.albumname = albumname;
+    this.thumbnail = this.getScaledImage(380);
+    this.fullImage = this.getScaledImage(600);
+  }
+
+  getScaledImage(width) {
+    const imageRequest = JSON.stringify({
+      bucket: this.albumname,
+      key: this.key,
+      edits: {
+        resize: { width: width },
+      },
+    });
+
+    return cloudfrontBaseUrl + btoa(imageRequest);
+  }
+}
+
+listAlbums();
